@@ -57,5 +57,3 @@ table.insert(lean_alchemy.recipes, {
 - **Textures/Graphics:** CC-BY-SA-4.0 (Copyright (C) 2026 8a7l)
 
 You are free to use, modify, and distribute this mod under the terms of these licenses.
-```
-
