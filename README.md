@@ -1,6 +1,6 @@
 # Lean Alchemy
 
-A minimalist alchemy system for Luanti (Minetest Game / Lean Core). 
+A minimalist alchemy system for Luanti (Lean Core). 
 
 This mod adds a simple, lag-free way to brew potions using vanilla items. No new plants, no complex machines, no `globalstep` — just a kit, recipes, and useful effects.
 
