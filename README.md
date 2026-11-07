@@ -49,7 +49,7 @@ table.insert(lean_alchemy.recipes, {
 ## Dependencies
 
 - `default`
-- `flowers`
+
 
 ## License
 
