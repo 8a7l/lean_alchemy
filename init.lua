@@ -188,7 +188,7 @@ local recipe_formspec =
     "button[4,6.5;2,0.8;close;Close]"
 
 local formspec = 
-    "size[8,6]" ..
+    "size[8,7.5]" ..
     "label[0,0;Alchemist's Kit]" ..
     "list[current_name;input;1,1;3,1;]" ..
     "label[4.5,1.2;→]" ..
