@@ -188,7 +188,7 @@ local recipe_formspec =
     "button[4,6.5;2,0.8;close;Close]"
 
 local formspec = 
-    "size[8,7.5]" ..
+    "size[8,6]" ..
     "label[0,0;Alchemist's Kit]" ..
     "list[current_name;input;1,1;3,1;]" ..
     "label[4.5,1.2;→]" ..
@@ -199,7 +199,6 @@ local formspec =
 
 minetest.register_node("lean_alchemy:kit", {
     description = S("Alchemist's Kit"),
-    -- ТУТ ВИПРАВЛЕНО: для лівої сторони використовується права текстура, щоб не було помилки
     tiles = {
         "lean_alchemy_kit_top.png", "lean_alchemy_kit_bottom.png",
         "lean_alchemy_kit_right.png", "lean_alchemy_kit_right.png", 
@@ -241,33 +240,48 @@ minetest.register_node("lean_alchemy:kit", {
             for _, item in ipairs(r.input) do req[item] = (req[item] or 0) + 1 end
             local possible = nil
             for item, count in pairs(req) do
-                local can = math.floor((input_counts[item] or 0) / count)
-                if possible == nil or can < possible then possible = can end
+                if count and count > 0 then
+                    local can = math.floor((input_counts[item] or 0) / count)
+                    if possible == nil or can < possible then possible = can end
+                end
             end
             if possible and possible > 0 then matched, max_batches = r, possible break end
         end
 
         if not matched then return chat_send(p_name, "Invalid recipe.") end
+        
+        -- Перевірка, чи існує предмет взагалі
+        if not minetest.registered_items[matched.output] then
+            return chat_send(p_name, "Error: Invalid output item in recipe.")
+        end
 
         local out = inv:get_stack("output", 1)
         if not out:is_empty() then
             if out:get_name() ~= matched.output then return chat_send(p_name, "Output full.") end
-            max_batches = math.min(max_batches, out:get_stack_max() - out:get_count())
+            max_batches = math.min(max_batches, (out:get_stack_max() or 99) - out:get_count())
         else
-            max_batches = math.min(max_batches, ItemStack(matched.output):get_stack_max())
+            max_batches = math.min(max_batches, ItemStack(matched.output):get_stack_max() or 99)
         end
 
         if max_batches <= 0 then return chat_send(p_name, "Output full.") end
 
         local to_remove = {}
-        for _, item in ipairs(matched.input) do to_remove[item] = (to_remove[item] or 0) + max_batches end
+        for _, item in ipairs(matched.input) do 
+            to_remove[item] = (to_remove[item] or 0) + max_batches 
+        end
+        
         for i = 1, 3 do
             local stack = inv:get_stack("input", i)
-            if not stack:is_empty() and to_remove[stack:get_name()] then
-                local rm = math.min(stack:get_count(), to_remove[stack:get_name()])
-                stack:set_count(stack:get_count() - rm)
-                to_remove[stack:get_name()] = to_remove[stack:get_name()] - rm
-                inv:set_stack("input", i, stack)
+            if not stack:is_empty() then
+                local name = stack:get_name()
+                local to_rm = to_remove[name]
+                -- БЕЗПЕЧНА ПЕРЕВІРКА: чи є цей предмет у списку на видалення і чи його кількість > 0
+                if to_rm and to_rm > 0 then
+                    local rm = math.min(stack:get_count(), to_rm)
+                    stack:set_count(stack:get_count() - rm)
+                    to_remove[name] = to_rm - rm
+                    inv:set_stack("input", i, stack)
+                end
             end
         end
 
