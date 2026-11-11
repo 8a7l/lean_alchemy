@@ -18,13 +18,22 @@ local hud_timer_running = false
 
 local function revert_effect(player, effect_name)
     if not player or not player:is_player() then return end
-    if effect_name == "speed" then player:set_physics_override({ speed = 1.0 })
-    elseif effect_name == "night_vision" then player:override_day_night_ratio(nil)
-    elseif effect_name == "fire_resistance" then player:get_meta():set_int("lean_alchemy_fire_resist", 0)
-    elseif effect_name == "invisibility" then player:set_properties({ visual_size = { x = 1, y = 1, z = 1 } })
-    elseif effect_name == "jump_boost" then player:set_physics_override({ jump = 1.0 })
-    elseif effect_name == "slow_falling" then player:set_physics_override({ gravity = 1.0 })
-    elseif effect_name == "resistance" then player:get_meta():set_int("lean_alchemy_resist", 0)
+    local p_name = player:get_player_name()
+    
+    if effect_name == "speed" then 
+        lean_physics.clear_modifier(p_name, "potion_speed")
+    elseif effect_name == "night_vision" then 
+        player:override_day_night_ratio(nil)
+    elseif effect_name == "fire_resistance" then 
+        player:get_meta():set_int("lean_alchemy_fire_resist", 0)
+    elseif effect_name == "invisibility" then 
+        player:set_properties({ visual_size = { x = 1, y = 1, z = 1 } })
+    elseif effect_name == "jump_boost" then 
+        lean_physics.clear_modifier(p_name, "potion_jump")
+    elseif effect_name == "slow_falling" then 
+        lean_physics.clear_modifier(p_name, "potion_slow_falling")
+    elseif effect_name == "resistance" then 
+        player:get_meta():set_int("lean_alchemy_resist", 0)
     end
 end
 
@@ -37,7 +46,8 @@ local function update_hud_loop()
             local to_remove = {}
             for effect_name, data in pairs(player_data.effects) do
                 data.time_left = data.time_left - 1
-                if data.time_left <= 0 then table.insert(to_remove, effect_name)
+                if data.time_left <= 0 then 
+                    table.insert(to_remove, effect_name)
                 else
                     global_any_active = true
                     local display_name = effect_name:gsub("_", " "):gsub("^%l", string.upper)
@@ -49,13 +59,17 @@ local function update_hud_loop()
                 player_data.effects[effect_name] = nil
             end
             if hud_text ~= "" then
-                if player_data.hud_id then player:hud_change(player_data.hud_id, "text", hud_text)
-                else player_data.hud_id = player:hud_add({ hud_elem_type = "text", position = {x = 0.98, y = 0.05}, alignment = {x = -1, y = 1}, text = hud_text, number = 0xFFFFFF, scale = {x = 100, y = 100} })
+                if player_data.hud_id then 
+                    player:hud_change(player_data.hud_id, "text", hud_text)
+                else 
+                    player_data.hud_id = player:hud_add({ hud_elem_type = "text", position = {x = 0.98, y = 0.05}, alignment = {x = -1, y = 1}, text = hud_text, number = 0xFFFFFF, scale = {x = 100, y = 100} })
                 end
             else
                 if player_data.hud_id then player:hud_remove(player_data.hud_id); player_data.hud_id = nil end
             end
-        else active_effects[p_name] = nil end
+        else 
+            active_effects[p_name] = nil 
+        end
     end
     if global_any_active then after(1, update_hud_loop) else hud_timer_running = false end
 end
@@ -69,8 +83,9 @@ local function add_effect(player, effect_name, duration)
 end
 
 -- ============================================================
--- ЕФЕКТИ ЗІЛЬ
+-- ЕФЕКТИ ЗІЛЬ (Використовують lean_physics)
 -- ============================================================
+
 function lean_alchemy.apply_health(player)
     local ticks = 5
     local function regen()
@@ -85,8 +100,16 @@ end
 function lean_alchemy.apply_instant_health(player)
     if player and player:is_player() then player:set_hp(math.min(player:get_hp() + 10, 20)) end
 end
-function lean_alchemy.apply_speed(player) player:set_physics_override({ speed = 1.5 }); add_effect(player, "speed", 15) end
-function lean_alchemy.apply_night_vision(player) player:override_day_night_ratio(1.0); add_effect(player, "night_vision", 30) end
+
+function lean_alchemy.apply_speed(player) 
+    lean_physics.set_modifier(player:get_player_name(), "potion_speed", { speed = 1.5 })
+    add_effect(player, "speed", 15) 
+end
+
+function lean_alchemy.apply_night_vision(player) 
+    player:override_day_night_ratio(1.0)
+    add_effect(player, "night_vision", 30) 
+end
 
 function lean_alchemy.apply_water_breathing(player)
     local p_name = player:get_player_name()
@@ -101,12 +124,32 @@ function lean_alchemy.apply_water_breathing(player)
     loop()
 end
 
-function lean_alchemy.apply_fire_resistance(player) player:get_meta():set_int("lean_alchemy_fire_resist", 1); add_effect(player, "fire_resistance", 15) end
-function lean_alchemy.apply_invisibility(player) player:set_properties({ visual_size = { x = 0.01, y = 0.01, z = 0.01 } }); add_effect(player, "invisibility", 15) end
-function lean_alchemy.apply_jump_boost(player) player:set_physics_override({ jump = 1.5 }); add_effect(player, "jump_boost", 20) end
-function lean_alchemy.apply_slow_falling(player) player:set_physics_override({ gravity = 0.3 }); add_effect(player, "slow_falling", 20) end
-function lean_alchemy.apply_resistance(player) player:get_meta():set_int("lean_alchemy_resist", 1); add_effect(player, "resistance", 20) end
+function lean_alchemy.apply_fire_resistance(player) 
+    player:get_meta():set_int("lean_alchemy_fire_resist", 1)
+    add_effect(player, "fire_resistance", 15) 
+end
 
+function lean_alchemy.apply_invisibility(player) 
+    player:set_properties({ visual_size = { x = 0.01, y = 0.01, z = 0.01 } })
+    add_effect(player, "invisibility", 15) 
+end
+
+function lean_alchemy.apply_jump_boost(player) 
+    lean_physics.set_modifier(player:get_player_name(), "potion_jump", { jump = 1.5 })
+    add_effect(player, "jump_boost", 20) 
+end
+
+function lean_alchemy.apply_slow_falling(player) 
+    lean_physics.set_modifier(player:get_player_name(), "potion_slow_falling", { gravity = 0.3 })
+    add_effect(player, "slow_falling", 20) 
+end
+
+function lean_alchemy.apply_resistance(player) 
+    player:get_meta():set_int("lean_alchemy_resist", 1)
+    add_effect(player, "resistance", 20) 
+end
+
+-- Перехоплювач шкоди (Вогнестійкість + Опір)
 minetest.register_on_player_hpchange(function(player, hp_change, reason)
     if hp_change < 0 then
         if player:get_meta():get_int("lean_alchemy_fire_resist") == 1 then
@@ -164,7 +207,6 @@ register_potion("resistance", { description = S("Potion of Resistance"), color =
 -- ============================================================
 -- НАБІР АЛХІМІКА ТА КНИГА РЕЦЕПТІВ
 -- ============================================================
-
 local function build_recipe_string()
     local lines = {}
     for _, r in ipairs(lean_alchemy.recipes) do
@@ -250,7 +292,6 @@ minetest.register_node("lean_alchemy:kit", {
 
         if not matched then return chat_send(p_name, "Invalid recipe.") end
         
-        -- Перевірка, чи існує предмет взагалі
         if not minetest.registered_items[matched.output] then
             return chat_send(p_name, "Error: Invalid output item in recipe.")
         end
@@ -275,7 +316,6 @@ minetest.register_node("lean_alchemy:kit", {
             if not stack:is_empty() then
                 local name = stack:get_name()
                 local to_rm = to_remove[name]
-                -- БЕЗПЕЧНА ПЕРЕВІРКА: чи є цей предмет у списку на видалення і чи його кількість > 0
                 if to_rm and to_rm > 0 then
                     local rm = math.min(stack:get_count(), to_rm)
                     stack:set_count(stack:get_count() - rm)
