@@ -18,10 +18,10 @@ local hud_timer_running = false
 
 local function revert_effect(player, effect_name)
     if not player or not player:is_player() then return end
-    local p_name = player:get_player_name()
     
+    -- Use playerphysics API / Використовуємо API playerphysics
     if effect_name == "speed" then 
-        lean_physics.clear_modifier(p_name, "potion_speed")
+        playerphysics.remove_physics_factor(player, "speed", "potion_speed")
     elseif effect_name == "night_vision" then 
         player:override_day_night_ratio(nil)
     elseif effect_name == "fire_resistance" then 
@@ -29,9 +29,9 @@ local function revert_effect(player, effect_name)
     elseif effect_name == "invisibility" then 
         player:set_properties({ visual_size = { x = 1, y = 1, z = 1 } })
     elseif effect_name == "jump_boost" then 
-        lean_physics.clear_modifier(p_name, "potion_jump")
+        playerphysics.remove_physics_factor(player, "jump", "potion_jump")
     elseif effect_name == "slow_falling" then 
-        lean_physics.clear_modifier(p_name, "potion_slow_falling")
+        playerphysics.remove_physics_factor(player, "gravity", "potion_slow_falling")
     elseif effect_name == "resistance" then 
         player:get_meta():set_int("lean_alchemy_resist", 0)
     end
@@ -83,7 +83,7 @@ local function add_effect(player, effect_name, duration)
 end
 
 -- ============================================================
--- ЕФЕКТИ ЗІЛЬ (Використовують lean_physics)
+-- ЕФЕКТИ ЗІЛЬ
 -- ============================================================
 
 function lean_alchemy.apply_health(player)
@@ -102,7 +102,7 @@ function lean_alchemy.apply_instant_health(player)
 end
 
 function lean_alchemy.apply_speed(player) 
-    lean_physics.set_modifier(player:get_player_name(), "potion_speed", { speed = 1.5 })
+    playerphysics.add_physics_factor(player, "speed", "potion_speed", 1.5)
     add_effect(player, "speed", 15) 
 end
 
@@ -135,12 +135,12 @@ function lean_alchemy.apply_invisibility(player)
 end
 
 function lean_alchemy.apply_jump_boost(player) 
-    lean_physics.set_modifier(player:get_player_name(), "potion_jump", { jump = 1.5 })
+    playerphysics.add_physics_factor(player, "jump", "potion_jump", 1.5)
     add_effect(player, "jump_boost", 20) 
 end
 
 function lean_alchemy.apply_slow_falling(player) 
-    lean_physics.set_modifier(player:get_player_name(), "potion_slow_falling", { gravity = 0.3 })
+    playerphysics.add_physics_factor(player, "gravity", "potion_slow_falling", 0.3)
     add_effect(player, "slow_falling", 20) 
 end
 
@@ -230,7 +230,7 @@ local recipe_formspec =
     "button[4,6.5;2,0.8;close;Close]"
 
 local formspec = 
-    "size[8,7.5]" ..
+    "size[8,6]" ..
     "label[0,0;Alchemist's Kit]" ..
     "list[current_name;input;1,1;3,1;]" ..
     "label[4.5,1.2;→]" ..
